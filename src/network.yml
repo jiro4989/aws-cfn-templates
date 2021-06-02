@@ -1,0 +1,126 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+
+Parameters:
+  EnvironmentName:
+    Description: The environment name
+    Type: String
+    Default: dev
+    AllowedValues:
+      - prd
+      - stg
+      - dev
+  ProjectName:
+    Description: The project name
+    Type: String
+
+Mappings:
+  prd:
+    VPC:            { CidrBlock: 10.0.0.0/16 }
+    PublicSubnetA:  { CidrBlock: 10.0.0.0/24,  AvailabilityZone: ap-northeast-1a }
+    PrivateSubnetA: { CidrBlock: 10.0.1.0/24,  AvailabilityZone: ap-northeast-1a }
+    PublicSubnetC:  { CidrBlock: 10.0.16.0/24, AvailabilityZone: ap-northeast-1c }
+    PrivateSubnetC: { CidrBlock: 10.0.17.0/24, AvailabilityZone: ap-northeast-1c }
+  stg:
+    VPC:            { CidrBlock: 10.1.0.0/16 }
+    PublicSubnetA:  { CidrBlock: 10.1.0.0/24,  AvailabilityZone: ap-northeast-1a }
+    PrivateSubnetA: { CidrBlock: 10.1.1.0/24,  AvailabilityZone: ap-northeast-1a }
+    PublicSubnetC:  { CidrBlock: 10.1.16.0/24, AvailabilityZone: ap-northeast-1c }
+    PrivateSubnetC: { CidrBlock: 10.1.17.0/24, AvailabilityZone: ap-northeast-1c }
+  dev:
+    VPC:            { CidrBlock: 10.2.0.0/16 }
+    PublicSubnetA:  { CidrBlock: 10.2.0.0/24,  AvailabilityZone: ap-northeast-1a }
+    PrivateSubnetA: { CidrBlock: 10.2.1.0/24,  AvailabilityZone: ap-northeast-1a }
+    PublicSubnetC:  { CidrBlock: 10.2.16.0/24, AvailabilityZone: ap-northeast-1c }
+    PrivateSubnetC: { CidrBlock: 10.2.17.0/24, AvailabilityZone: ap-northeast-1c }
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !FindInMap [ !Ref EnvironmentName, VPC, CidrBlock ]
+      Tags:
+        - Key: env
+          Value: !Ref EnvironmentName
+        - Key: Name
+          Value: !Sub "${EnvironmentName}-${ProjectName}"
+        - Key: created_by
+          Value: cloudformation
+
+  PublicSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: !FindInMap [ !Ref EnvironmentName, PublicSubnetA, CidrBlock ]
+      VpcId: !Ref VPC
+      AvailabilityZone: !FindInMap [ !Ref EnvironmentName, PublicSubnetA, AvailabilityZone ]
+      Tags:
+        - Key: env
+          Value: !Ref EnvironmentName
+        - Key: Name
+          Value: !Sub "${EnvironmentName}-${ProjectName}-public-a"
+        - Key: created_by
+          Value: cloudformation
+
+  PublicSubnetC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: !FindInMap [ !Ref EnvironmentName, PublicSubnetC, CidrBlock ]
+      VpcId: !Ref VPC
+      AvailabilityZone: !FindInMap [ !Ref EnvironmentName, PublicSubnetC, AvailabilityZone ]
+      Tags:
+        - Key: env
+          Value: !Ref EnvironmentName
+        - Key: Name
+          Value: !Sub "${EnvironmentName}-${ProjectName}-public-c"
+        - Key: created_by
+          Value: cloudformation
+
+  PrivateSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: !FindInMap [ !Ref EnvironmentName, PrivateSubnetA, CidrBlock ]
+      VpcId: !Ref VPC
+      AvailabilityZone: !FindInMap [ !Ref EnvironmentName, PrivateSubnetA, AvailabilityZone ]
+      Tags:
+        - Key: env
+          Value: !Ref EnvironmentName
+        - Key: Name
+          Value: !Sub "${EnvironmentName}-${ProjectName}-private-a"
+        - Key: created_by
+          Value: cloudformation
+
+  PrivateSubnetC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: !FindInMap [ !Ref EnvironmentName, PrivateSubnetC, CidrBlock ]
+      VpcId: !Ref VPC
+      AvailabilityZone: !FindInMap [ !Ref EnvironmentName, PrivateSubnetC, AvailabilityZone ]
+      Tags:
+        - Key: env
+          Value: !Ref EnvironmentName
+        - Key: Name
+          Value: !Sub "${EnvironmentName}-${ProjectName}-private-c"
+        - Key: created_by
+          Value: cloudformation
+
+Outputs:
+  VPC:
+    Value: !Ref VPC
+    Export:
+      Name: !Sub "${EnvironmentName}-${ProjectName}-vpc"
+  PublicSubnetA:
+    Value: !Ref PublicSubnetA
+    Export:
+      Name: !Sub "${EnvironmentName}-${ProjectName}-public-subnet-a"
+  PublicSubnetC:
+    Value: !Ref PublicSubnetC
+    Export:
+      Name: !Sub "${EnvironmentName}-${ProjectName}-public-subnet-c"
+  PrivateSubnetA:
+    Value: !Ref PrivateSubnetA
+    Export:
+      Name: !Sub "${EnvironmentName}-${ProjectName}-private-subnet-a"
+  PrivateSubnetC:
+    Value: !Ref PrivateSubnetC
+    Export:
+      Name: !Sub "${EnvironmentName}-${ProjectName}-private-subnet-c"

@@ -1,0 +1,20 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+
+Resources:
+  IAMGroupDeveloper:
+    Type: AWS::IAM::Group
+    Properties:
+      GroupName: dev
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AWSCodeCommitPowerUser
+
+  IAMUserDeveloper:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: developer
+      Groups:
+        - !Ref IAMGroupDeveloper
+      Tags:
+        - Key: created_by
+          Value: cloudformation

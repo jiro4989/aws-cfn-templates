@@ -1,0 +1,32 @@
+= cloudformation
+:toc: left
+:sectnums:
+
+AWS CloudFormationのYAMLを管理するリポジトリ。
+練習用のリポジトリで、コピペで使い回せるような汎用性の高い作りにする。
+
+== 使い方
+
+以下のコマンドを実行する。
+
+[source,bash]
+----
+make deploy
+----
+
+== ファイル構成
+
+src ディレクトリ配下のyamlファイルがCloudFormationで使うテンプレート。
+
+[options="header"]
+|=================
+| ファイル | 説明
+| iam_group.yml | IAMグループ、IAMユーザを作成する
+| network.yml | VPC, Subnetを作成する
+|=================
+
+== CloudFormationのYAMLを書く時に意識すること
+
+. ライフサイクルごとにStackを分ける
+.. そのStackのライフサイクル（削除されるケースにどういった単位で消えるか）などを意識してStackを分割する
+.. たとえばVPCとEC2インスタンスは明らかに寿命が違うため、Stackが別れているべき
