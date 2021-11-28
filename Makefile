@@ -1,3 +1,5 @@
+FORMAT_CMD := docker run --rm -v $(PWD):/app -w /app -it aws_cfn_templates_formatter
+
 .PHONY: help
 help: ## ドキュメントのヘルプを表示する。
 	@grep -E '^[0-9a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
@@ -12,6 +14,18 @@ deploy: ## デプロイする。
 .PHONY: deploy-env
 deploy-env: ## 環境指定でデプロイする。ENV変数が必須パラメータ。内部用。
 	aws cloudformation deploy --stack-name $(ENV)-network --template-file ./src/network.yml --parameter-overrides EnvironmentName=$(ENV) ProjectName=work
+
+.PHONY: format
+format: ## フォーマット済みか検証する
+	for f in src/*.yml; do \
+		$(FORMAT_CMD) -v $$f; \
+	done
+
+.PHONY: format-save
+format-save: ## フォーマットして上書きする
+	for f in src/*.yml; do \
+		$(FORMAT_CMD) -w $$f; \
+	done
 
 .PHONY: setup-tool
 setup-tool: setup-tool-formatter setup-tool-linter ## ツールイメージを生成する
