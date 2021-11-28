@@ -12,3 +12,14 @@ deploy: ## デプロイする。
 .PHONY: deploy-env
 deploy-env: ## 環境指定でデプロイする。ENV変数が必須パラメータ。内部用。
 	aws cloudformation deploy --stack-name $(ENV)-network --template-file ./src/network.yml --parameter-overrides EnvironmentName=$(ENV) ProjectName=work
+
+.PHONY: setup-tool
+setup-tool: setup-tool-formatter setup-tool-linter ## ツールイメージを生成する
+
+.PHONY: setup-tool-formatter
+setup-tool-formatter: ## フォーマッタをインストールする
+	cd tool/formatter && docker build -t aws_cfn_templates_formatter .
+
+.PHONY: setup-tool-linter
+setup-tool-linter: ## Linterをインストールする
+	cd tool/linter && docker build -t aws_cfn_templates_linter .
