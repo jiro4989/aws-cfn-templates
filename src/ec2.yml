@@ -18,8 +18,9 @@ Resources:
   EC2:
     Type: "AWS::EC2::Instance"
     Properties:
-      ImageId: ami-00d101850e971728d
+      ImageId: ami-06642e8d6bbbae678
       InstanceType: t2.micro
+      IamInstanceProfile: !Ref InstanceProfile
       NetworkInterfaces:
         - AssociatePublicIpAddress: "false"
           DeviceIndex: "0"
@@ -36,3 +37,48 @@ Resources:
         #!/bin/bash
         sudo yum install -y git
         
+  # SessionManagerLogGroup:
+  #   Type: AWS::Logs::LogGroup
+  #   Properties: 
+  #     LogGroupName: !Sub /session-manager/${EnvironmentName}/${ProjectName}
+  #     RetentionInDays: 3
+  #     Tags: 
+  #       - Key: created_by
+  #         Value: cloudformation
+
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties: 
+      InstanceProfileName: !Sub ${EnvironmentName}-${ProjectName}-profile
+      Path: /
+      Roles: 
+        - Ref: SessionManagerIAMRole
+
+  SessionManagerIAMRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: !Sub ${EnvironmentName}-${ProjectName}-ssm
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+          - Action:
+              - 's3:PutObject'
+            Resources:
+              - !Sub
+                - "${Arn}/*"
+                - Arn: !ImportValue log-bucket-arn
+          - Action:
+              - 'logs:PutLogEvents'
+              - 'logs:CreateLogStream'
+            Resources:
+              - '*'
+      Path: /
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore'
+        - "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM"

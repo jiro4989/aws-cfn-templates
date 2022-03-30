@@ -5,3 +5,14 @@ Resources:
     Type: "AWS::S3::Bucket"
     Properties:
       BucketName: cfn.jiro4989.com
+
+  LogS3Bucket:
+    Type: "AWS::S3::Bucket"
+    Properties:
+      BucketName: log.jiro4989.com
+
+Outputs:
+  LogS3Bucket:
+    Value: !GetAtt LogS3Bucket.Arn
+    Export:
+      Name: log-bucket-arn
