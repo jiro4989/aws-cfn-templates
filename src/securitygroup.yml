@@ -16,15 +16,15 @@ Parameters:
 
 Resources:
   PrivateSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
+    Type: "AWS::EC2::SecurityGroup"
     Properties:
-      GroupName: !Sub ${EnvironmentName}-${ProjectName}-private-sg
       GroupDescription: Security group for private subnet
-      VpcId:
-        "Fn::ImportValue": !Sub ${EnvironmentName}-${ProjectName}-vpc
+      GroupName: !Sub ${EnvironmentName}-${ProjectName}-private-sg
       SecurityGroupEgress:
-        - CidrIp: 0.0.0.0/0
+        - CidrIp: "0.0.0.0/0"
           IpProtocol: -1
+      VpcId: !ImportValue
+        "Fn::Sub": ${EnvironmentName}-${ProjectName}-vpc
 
 Outputs:
   PrivateSecurityGroup:

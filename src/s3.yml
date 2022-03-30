@@ -2,6 +2,6 @@ AWSTemplateFormatVersion: "2010-09-09"
 
 Resources:
   CFnS3Bucket:
-    Type: AWS::S3::Bucket
+    Type: "AWS::S3::Bucket"
     Properties:
-      BucketName: 'cfn.jiro4989.com'
+      BucketName: cfn.jiro4989.com

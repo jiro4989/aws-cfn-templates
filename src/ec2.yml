@@ -16,22 +16,23 @@ Parameters:
 
 Resources:
   EC2:
-    Type: AWS::EC2::Instance
+    Type: "AWS::EC2::Instance"
     Properties:
       ImageId: ami-00d101850e971728d
       InstanceType: t2.micro
       NetworkInterfaces:
         - AssociatePublicIpAddress: "false"
           DeviceIndex: "0"
-          SubnetId:
-            "Fn::ImportValue": !Sub ${EnvironmentName}-${ProjectName}-private-subnet-a
           GroupSet:
             - "Fn::ImportValue": !Sub ${EnvironmentName}-${ProjectName}-private-sg
-      UserData: !Base64 |
-        #!/bin/bash
-        sudo yum install -y git
+          SubnetId: !ImportValue
+            "Fn::Sub": ${EnvironmentName}-${ProjectName}-private-subnet-a
       Tags:
         - Key: Name
           Value: !Sub ${EnvironmentName}-${ProjectName}-ec2
         - Key: created_by
           Value: cloudformation
+      UserData: !Base64 |
+        #!/bin/bash
+        sudo yum install -y git
+        
