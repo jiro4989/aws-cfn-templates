@@ -9,7 +9,7 @@ deploy: ## デプロイする。
 	# IAM周りを変更する場合は --capabilities CAPABILITY_NAMED_IAM オプションが必須
 	aws cloudformation deploy --stack-name iam --template-file ./src/iam.yml --capabilities CAPABILITY_NAMED_IAM
 	aws cloudformation deploy --stack-name s3 --template-file ./src/s3.yml
-	aws s3 cp src/ec2.yml s3://cfn-jiro4989-com/
+	aws s3 cp src/ec2.yml s3://cfn.jiro4989.com/
 	make deploy-env ENV=dev
 
 .PHONY: deploy-env
