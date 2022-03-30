@@ -7,13 +7,15 @@ help: ## ドキュメントのヘルプを表示する。
 .PHONY: deploy
 deploy: ## デプロイする。
 	# IAM周りを変更する場合は --capabilities CAPABILITY_NAMED_IAM オプションが必須
-	aws cloudformation deploy --stack-name iam-group --template-file ./src/iam_group.yml --capabilities CAPABILITY_NAMED_IAM
+	aws cloudformation deploy --stack-name iam --template-file ./src/iam.yml --capabilities CAPABILITY_NAMED_IAM
+	aws cloudformation deploy --stack-name s3 --template-file ./src/s3.yml
+	aws s3 cp src/ec2.yml s3://cfn.jiro4989.com/
 	make deploy-env ENV=dev
-	#make deploy-env ENV=prd
 
 .PHONY: deploy-env
 deploy-env: ## 環境指定でデプロイする。ENV変数が必須パラメータ。内部用。
 	aws cloudformation deploy --stack-name $(ENV)-network --template-file ./src/network.yml --parameter-overrides EnvironmentName=$(ENV) ProjectName=work
+	aws cloudformation deploy --stack-name $(ENV)-securitygroup --template-file ./src/securitygroup.yml --parameter-overrides EnvironmentName=$(ENV) ProjectName=work
 
 .PHONY: format
 format: ## フォーマット済みか検証する
