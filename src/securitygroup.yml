@@ -24,6 +24,7 @@ Resources:
         "Fn::ImportValue": !Sub ${EnvironmentName}-${ProjectName}-vpc
       SecurityGroupEgress:
         - CidrIp: 0.0.0.0/0
+          IpProtocol: -1
 
 Outputs:
   PrivateSecurityGroup:
