@@ -1,0 +1,33 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - prd
+      - stg
+      - dev
+    Description: The environment name
+
+  ProjectName:
+    Type: String
+    Description: The project name
+
+Resources:
+  PrivateSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: Security group for private subnet
+      GroupName: !Sub ${EnvironmentName}-${ProjectName}-private-sg
+      SecurityGroupEgress:
+        - CidrIp: "0.0.0.0/0"
+          IpProtocol: -1
+      VpcId: !ImportValue
+        "Fn::Sub": ${EnvironmentName}-${ProjectName}-vpc
+
+Outputs:
+  PrivateSecurityGroup:
+    Value: !Ref PrivateSecurityGroup
+    Export:
+      Name: !Sub ${EnvironmentName}-${ProjectName}-private-sg

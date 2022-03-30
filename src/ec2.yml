@@ -1,0 +1,38 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - prd
+      - stg
+      - dev
+    Description: The environment name
+
+  ProjectName:
+    Type: String
+    Description: The project name
+
+Resources:
+  EC2:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      ImageId: ami-00d101850e971728d
+      InstanceType: t2.micro
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: "false"
+          DeviceIndex: "0"
+          GroupSet:
+            - "Fn::ImportValue": !Sub ${EnvironmentName}-${ProjectName}-private-sg
+          SubnetId: !ImportValue
+            "Fn::Sub": ${EnvironmentName}-${ProjectName}-private-subnet-a
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-${ProjectName}-ec2
+        - Key: created_by
+          Value: cloudformation
+      UserData: !Base64 |
+        #!/bin/bash
+        sudo yum install -y git
+        
