@@ -66,7 +66,7 @@ Resources:
                 
       PolicyName: !Sub ${EnvironmentName}-${ProjectName}-ssm
       Roles:
-        - Ref: SessionManagerIAMRole
+        - !Ref SessionManagerIAMRole
 
   EC2LogGroup:
     Type: AWS::Logs::LogGroup
