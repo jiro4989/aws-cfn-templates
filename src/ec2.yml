@@ -112,7 +112,8 @@ Resources:
         - IpProtocol: tcp
           FromPort: 443
           ToPort: 443
-          CidrIp: !Ref VPCCIDR
+          CidrIp: !ImportValue
+            "Fn::Sub": ${EnvironmentName}-${ProjectName}-vpc-cidr
 
   EndpointSSM:
     Type: AWS::EC2::VPCEndpoint

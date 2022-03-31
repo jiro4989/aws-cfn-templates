@@ -175,6 +175,11 @@ Outputs:
     Export:
       Name: !Sub ${EnvironmentName}-${ProjectName}-vpc
 
+  VPCCIDR:
+    Value: !GetAtt VPC.CidrBlock
+    Export:
+      Name: !Sub ${EnvironmentName}-${ProjectName}-vpc-cidr
+
   PrivateSubnetA:
     Value: !Ref PrivateSubnetA
     Export:
