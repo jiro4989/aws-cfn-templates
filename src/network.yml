@@ -71,6 +71,8 @@ Resources:
         - Ref: EnvironmentName
         - VPC
         - CidrBlock
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
       Tags:
         - Key: env
           Value: !Ref EnvironmentName
@@ -159,7 +161,25 @@ Resources:
           Value: cloudformation
       VpcId: !Ref VPC
 
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-${ProjectName}-private-route-table
+
 Outputs:
+  VPC:
+    Value: !Ref VPC
+    Export:
+      Name: !Sub ${EnvironmentName}-${ProjectName}-vpc
+
+  VPCCIDR:
+    Value: !GetAtt VPC.CidrBlock
+    Export:
+      Name: !Sub ${EnvironmentName}-${ProjectName}-vpc-cidr
+
   PrivateSubnetA:
     Value: !Ref PrivateSubnetA
     Export:
@@ -180,7 +200,7 @@ Outputs:
     Export:
       Name: !Sub ${EnvironmentName}-${ProjectName}-public-subnet-c
 
-  VPC:
-    Value: !Ref VPC
+  PrivateRouteTable:
+    Value: !Ref PrivateRouteTable
     Export:
-      Name: !Sub ${EnvironmentName}-${ProjectName}-vpc
+      Name: !Sub ${EnvironmentName}-${ProjectName}-private-route-table

@@ -15,10 +15,73 @@ Parameters:
     Description: The project name
 
 Resources:
+  SessionManagerIAMRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+      Path: /
+      RoleName: !Sub ${EnvironmentName}-${ProjectName}-ssm
+
+  InstanceProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      InstanceProfileName: !Sub ${EnvironmentName}-${ProjectName}-profile
+      Path: /
+      Roles:
+        - !Ref SessionManagerIAMRole
+
+  SessionManagerIAMPolicy:
+    Type: "AWS::IAM::Policy"
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - "s3:PutObject"
+            Resource: !Sub
+              - ${Arn}/*
+              - Arn: !ImportValue log-bucket-arn
+          - Effect: Allow
+            Action:
+              - "logs:PutLogEvents"
+              - "logs:CreateLogStream"
+            Resource:
+              - !Sub
+                - ${Arn}
+                - Arn: !GetAtt EC2LogGroup.Arn
+              - !Sub
+                - ${Arn}/*
+                - Arn: !GetAtt EC2LogGroup.Arn
+                
+      PolicyName: !Sub ${EnvironmentName}-${ProjectName}-ssm
+      Roles:
+        - !Ref SessionManagerIAMRole
+
+  EC2LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties: 
+      LogGroupName: !Sub ${EnvironmentName}-${ProjectName}-ssm
+      RetentionInDays: 1
+      Tags: 
+        - Key: created_by
+          Value: cloudformation
+
   EC2:
     Type: "AWS::EC2::Instance"
     Properties:
-      ImageId: ami-00d101850e971728d
+      IamInstanceProfile: !Ref InstanceProfile
+      ImageId: ami-0521a4a0a1329ff86
       InstanceType: t2.micro
       NetworkInterfaces:
         - AssociatePublicIpAddress: "false"
@@ -35,4 +98,72 @@ Resources:
       UserData: !Base64 |
         #!/bin/bash
         sudo yum install -y git
-        
+
+  EndpointSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: EndpointSecurityGroup
+      VpcId: !ImportValue
+        "Fn::Sub": ${EnvironmentName}-${ProjectName}-vpc
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-${ProjectName}-endpoint-sg
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: !ImportValue
+            "Fn::Sub": ${EnvironmentName}-${ProjectName}-vpc-cidr
+
+  EndpointSSM:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - !Ref EndpointSecurityGroup
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ssm
+      SubnetIds:
+        - !ImportValue
+          "Fn::Sub": ${EnvironmentName}-${ProjectName}-private-subnet-a
+      VpcEndpointType: Interface
+      VpcId: !ImportValue
+        "Fn::Sub": ${EnvironmentName}-${ProjectName}-vpc
+
+  EndpointSSMMessages:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - !Ref EndpointSecurityGroup
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ssmmessages
+      SubnetIds:
+        - !ImportValue
+          "Fn::Sub": ${EnvironmentName}-${ProjectName}-private-subnet-a
+      VpcEndpointType: Interface
+      VpcId: !ImportValue
+        "Fn::Sub": ${EnvironmentName}-${ProjectName}-vpc
+
+  EndpointEC2Messages:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - !Ref EndpointSecurityGroup
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ec2messages
+      SubnetIds:
+        - !ImportValue
+          "Fn::Sub": ${EnvironmentName}-${ProjectName}-private-subnet-a
+      VpcEndpointType: Interface
+      VpcId: !ImportValue
+        "Fn::Sub": ${EnvironmentName}-${ProjectName}-vpc
+
+  EndpointS3:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      RouteTableIds:
+        - !ImportValue 
+          "Fn::Sub": ${EnvironmentName}-${ProjectName}-private-route-table
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
+      VpcEndpointType: Gateway
+      VpcId: !ImportValue
+        "Fn::Sub": ${EnvironmentName}-${ProjectName}-vpc
