@@ -195,6 +195,9 @@ Resources:
         - !Ref PrivateSubnetC
       SecurityGroupIds:
         - !Ref EndpointSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-${ProjectName}-ssm
 
   EndpointSSMMessages:
     Type: AWS::EC2::VPCEndpoint
@@ -208,6 +211,9 @@ Resources:
         - !Ref PrivateSubnetC
       SecurityGroupIds:
         - !Ref EndpointSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-${ProjectName}-ssmmessages
 
   EndpointEC2Messages:
     Type: AWS::EC2::VPCEndpoint
@@ -221,6 +227,9 @@ Resources:
         - !Ref PrivateSubnetC
       SecurityGroupIds:
         - !Ref EndpointSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-${ProjectName}-ec2messages
 
   EndpointS3:
     Type: AWS::EC2::VPCEndpoint
@@ -230,6 +239,9 @@ Resources:
       VpcId: !Ref VPC
       RouteTableIds:
         - !Ref PrivateRouteTable
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-${ProjectName}-s3
 
 Outputs:
   VPC:
