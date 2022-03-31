@@ -60,10 +60,10 @@ Resources:
             Resource:
               - !Sub
                 - ${Arn}
-                - Arn: !Ref EC2LogGroup
+                - Arn: !GetAtt EC2LogGroup.Arn
               - !Sub
                 - ${Arn}/*
-                - Arn: !Ref EC2LogGroup
+                - Arn: !GetAtt EC2LogGroup.Arn
                 
       PolicyName: !Sub ${EnvironmentName}-${ProjectName}-ssm
       Roles:
