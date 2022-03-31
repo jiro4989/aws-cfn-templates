@@ -82,10 +82,9 @@ Resources:
         Statement:
           - Action:
               - 's3:PutObject'
-            Resource:
-              - Fn::Sub:
-                - "${Arn}/*"
-                - Arn: !ImportValue log-bucket-arn
+            Resource: !Sub
+              - "${Arn}/*"
+              - Arn: !ImportValue log-bucket-arn
           # - Action:
           #     - 'logs:PutLogEvents'
           #     - 'logs:CreateLogStream'
