@@ -19,7 +19,7 @@ deploy-env: ## 環境指定でデプロイする。ENV変数が必須パラメ�
 
 .PHONY: deploy-ec2-env
 deploy-ec2-env: ## EC2を作る
-	aws cloudformation deploy --stack-name $(ENV)-ec2 --template-file ./src/ec2.yml --parameter-overrides EnvironmentName=$(ENV) ProjectName=work
+	aws cloudformation deploy --stack-name $(ENV)-ec2 --template-file ./src/ec2.yml --parameter-overrides EnvironmentName=$(ENV) ProjectName=work --capabilities CAPABILITY_NAMED_IAM
 
 .PHONY: format
 format: ## フォーマット済みか検証する
