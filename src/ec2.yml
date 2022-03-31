@@ -58,6 +58,7 @@ Resources:
     Type: 'AWS::IAM::Role'
     Properties:
       RoleName: !Sub ${EnvironmentName}-${ProjectName}-ssm
+      # AssumeRolePolicyDocument にはAssumeRoleしか定義できないので、Resourceセクションを持つStatementは定義できない
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -67,6 +68,18 @@ Resources:
                 - ec2.amazonaws.com
             Action:
               - 'sts:AssumeRole'
+      Path: /
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore'
+        - "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM"
+
+  SessionManagerIAMPolicy:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: !Sub ${EnvironmentName}-${ProjectName}-ssm
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
           - Action:
               - 's3:PutObject'
             Resource:
@@ -78,7 +91,5 @@ Resources:
               - 'logs:CreateLogStream'
             Resource:
               - '*'
-      Path: /
-      ManagedPolicyArns:
-        - 'arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore'
-        - "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM"
+      Roles: 
+        - Ref: SessionManagerIAMRole
