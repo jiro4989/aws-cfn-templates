@@ -76,7 +76,7 @@ Resources:
           - Action:
               - 'logs:PutLogEvents'
               - 'logs:CreateLogStream'
-            Resources:
+            Resource:
               - '*'
       Path: /
       ManagedPolicyArns:
