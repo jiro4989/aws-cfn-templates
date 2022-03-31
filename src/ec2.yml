@@ -83,13 +83,13 @@ Resources:
           - Action:
               - 's3:PutObject'
             Resource:
-              - !Sub
+              - Fn::Sub:
                 - "${Arn}/*"
                 - Arn: !ImportValue log-bucket-arn
-          - Action:
-              - 'logs:PutLogEvents'
-              - 'logs:CreateLogStream'
-            Resource:
-              - '*'
+          # - Action:
+          #     - 'logs:PutLogEvents'
+          #     - 'logs:CreateLogStream'
+          #   Resource:
+          #     - '*'
       Roles: 
         - Ref: SessionManagerIAMRole
