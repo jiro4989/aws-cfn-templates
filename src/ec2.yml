@@ -49,9 +49,7 @@ Resources:
         Statement:
           - Action:
               - "s3:PutObject"
-            Resource: !Sub
-              - ${Arn}/*
-              - Arn: !ImportValue log-bucket-arn
+            Resource: "*"
       PolicyName: !Sub ${EnvironmentName}-${ProjectName}-ssm
       Roles:
         - Ref: SessionManagerIAMRole
