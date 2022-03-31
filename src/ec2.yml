@@ -1,6 +1,14 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
 Parameters:
+  AvailabilityZone:
+    Type: String
+    Default: a
+    AllowedValues:
+      - a
+      - c
+    Description: Availability Zone
+
   EnvironmentName:
     Type: String
     Default: dev
@@ -14,15 +22,16 @@ Parameters:
     Type: String
     Description: The project name
 
-  AvailabilityZone:
-    Type: String
-    Default: a
-    AllowedValues:
-      - a
-      - c
-    Description: Availability Zone
-
 Resources:
+  EC2LogGroup:
+    Type: "AWS::Logs::LogGroup"
+    Properties:
+      LogGroupName: !Sub ${EnvironmentName}-${ProjectName}-ssm
+      RetentionInDays: 1
+      Tags:
+        - Key: created_by
+          Value: cloudformation
+
   SessionManagerIAMRole:
     Type: "AWS::IAM::Role"
     Properties:
@@ -46,44 +55,7 @@ Resources:
       InstanceProfileName: !Sub ${EnvironmentName}-${ProjectName}-profile
       Path: /
       Roles:
-        - !Ref SessionManagerIAMRole
-
-  SessionManagerIAMPolicy:
-    Type: "AWS::IAM::Policy"
-    Properties:
-      PolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Action:
-              - "s3:PutObject"
-            Resource: !Sub
-              - ${Arn}/*
-              - Arn: !ImportValue log-bucket-arn
-          - Effect: Allow
-            Action:
-              - "logs:PutLogEvents"
-              - "logs:CreateLogStream"
-            Resource:
-              - !Sub
-                - ${Arn}
-                - Arn: !GetAtt EC2LogGroup.Arn
-              - !Sub
-                - ${Arn}/*
-                - Arn: !GetAtt EC2LogGroup.Arn
-                
-      PolicyName: !Sub ${EnvironmentName}-${ProjectName}-ssm
-      Roles:
-        - !Ref SessionManagerIAMRole
-
-  EC2LogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties: 
-      LogGroupName: !Sub ${EnvironmentName}-${ProjectName}-ssm
-      RetentionInDays: 1
-      Tags: 
-        - Key: created_by
-          Value: cloudformation
+        - Ref: SessionManagerIAMRole
 
   EC2:
     Type: "AWS::EC2::Instance"
@@ -103,6 +75,33 @@ Resources:
           Value: !Sub ${EnvironmentName}-${ProjectName}
         - Key: created_by
           Value: cloudformation
-      UserData: !Base64 |
+      UserData: !Base64 |-
         #!/bin/bash
         sudo yum install -y git
+
+  SessionManagerIAMPolicy:
+    Type: "AWS::IAM::Policy"
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - "s3:PutObject"
+            Resource: !Sub
+              - ${Arn}/*
+              - Arn: !ImportValue log-bucket-arn
+          - Effect: Allow
+            Action:
+              - "logs:PutLogEvents"
+              - "logs:CreateLogStream"
+            Resource:
+              - "Fn::Sub":
+                  - ${Arn}
+                  - Arn: !GetAtt EC2LogGroup.Arn
+              - "Fn::Sub":
+                  - ${Arn}/*
+                  - Arn: !GetAtt EC2LogGroup.Arn
+      PolicyName: !Sub ${EnvironmentName}-${ProjectName}-ssm
+      Roles:
+        - Ref: SessionManagerIAMRole
