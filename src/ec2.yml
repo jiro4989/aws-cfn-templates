@@ -69,7 +69,7 @@ Resources:
               - 'sts:AssumeRole'
           - Action:
               - 's3:PutObject'
-            Resources:
+            Resource:
               - !Sub
                 - "${Arn}/*"
                 - Arn: !ImportValue log-bucket-arn
