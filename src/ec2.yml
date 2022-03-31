@@ -98,4 +98,71 @@ Resources:
       UserData: !Base64 |
         #!/bin/bash
         sudo yum install -y git
-        
+
+  EndpointSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: EndpointSecurityGroup
+      VpcId: !ImportValue
+        "Fn::Sub": ${EnvironmentName}-${ProjectName}-vpc
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-${ProjectName}-endpoint-sg
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: !Ref VPCCIDR
+
+  EndpointSSM:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - !Ref EndpointSecurityGroup
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ssm
+      SubnetIds:
+        - !ImportValue
+          "Fn::Sub": ${EnvironmentName}-${ProjectName}-private-subnet-a
+      VpcEndpointType: Interface
+      VpcId: !ImportValue
+        "Fn::Sub": ${EnvironmentName}-${ProjectName}-vpc
+
+  EndpointSSMMessages:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - !Ref EndpointSecurityGroup
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ssmmessages
+      SubnetIds:
+        - !ImportValue
+          "Fn::Sub": ${EnvironmentName}-${ProjectName}-private-subnet-a
+      VpcEndpointType: Interface
+      VpcId: !ImportValue
+        "Fn::Sub": ${EnvironmentName}-${ProjectName}-vpc
+
+  EndpointEC2Messages:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - !Ref EndpointSecurityGroup
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ec2messages
+      SubnetIds:
+        - !ImportValue
+          "Fn::Sub": ${EnvironmentName}-${ProjectName}-private-subnet-a
+      VpcEndpointType: Interface
+      VpcId: !ImportValue
+        "Fn::Sub": ${EnvironmentName}-${ProjectName}-vpc
+
+  EndpointS3:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      RouteTableIds:
+        - !ImportValue 
+          "Fn::Sub": ${EnvironmentName}-${ProjectName}-private-route-table
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
+      VpcEndpointType: Gateway
+      VpcId: !ImportValue
+        "Fn::Sub": ${EnvironmentName}-${ProjectName}-vpc
