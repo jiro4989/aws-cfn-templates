@@ -1,6 +1,14 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
 Parameters:
+  AvailabilityZone:
+    Type: String
+    Default: a
+    AllowedValues:
+      - a
+      - c
+    Description: Availability Zone
+
   EnvironmentName:
     Type: String
     Default: dev
@@ -15,6 +23,15 @@ Parameters:
     Description: The project name
 
 Resources:
+  EC2LogGroup:
+    Type: "AWS::Logs::LogGroup"
+    Properties:
+      LogGroupName: !Sub ${EnvironmentName}-${ProjectName}-ssm
+      RetentionInDays: 1
+      Tags:
+        - Key: created_by
+          Value: cloudformation
+
   SessionManagerIAMRole:
     Type: "AWS::IAM::Role"
     Properties:
@@ -38,7 +55,29 @@ Resources:
       InstanceProfileName: !Sub ${EnvironmentName}-${ProjectName}-profile
       Path: /
       Roles:
-        - !Ref SessionManagerIAMRole
+        - Ref: SessionManagerIAMRole
+
+  EC2:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      IamInstanceProfile: !Ref InstanceProfile
+      ImageId: ami-0521a4a0a1329ff86
+      InstanceType: t2.micro
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: "false"
+          DeviceIndex: "0"
+          GroupSet:
+            - "Fn::ImportValue": !Sub ${EnvironmentName}-${ProjectName}-private-sg
+          SubnetId: !ImportValue
+            "Fn::Sub": ${EnvironmentName}-${ProjectName}-private-subnet-${AvailabilityZone}
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-${ProjectName}
+        - Key: created_by
+          Value: cloudformation
+      UserData: !Base64 |-
+        #!/bin/bash
+        sudo yum install -y git
 
   SessionManagerIAMPolicy:
     Type: "AWS::IAM::Policy"
@@ -57,113 +96,12 @@ Resources:
               - "logs:PutLogEvents"
               - "logs:CreateLogStream"
             Resource:
-              - !Sub
-                - ${Arn}
-                - Arn: !GetAtt EC2LogGroup.Arn
-              - !Sub
-                - ${Arn}/*
-                - Arn: !GetAtt EC2LogGroup.Arn
-                
+              - "Fn::Sub":
+                  - ${Arn}
+                  - Arn: !GetAtt EC2LogGroup.Arn
+              - "Fn::Sub":
+                  - ${Arn}/*
+                  - Arn: !GetAtt EC2LogGroup.Arn
       PolicyName: !Sub ${EnvironmentName}-${ProjectName}-ssm
       Roles:
-        - !Ref SessionManagerIAMRole
-
-  EC2LogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties: 
-      LogGroupName: !Sub ${EnvironmentName}-${ProjectName}-ssm
-      RetentionInDays: 1
-      Tags: 
-        - Key: created_by
-          Value: cloudformation
-
-  EC2:
-    Type: "AWS::EC2::Instance"
-    Properties:
-      IamInstanceProfile: !Ref InstanceProfile
-      ImageId: ami-0521a4a0a1329ff86
-      InstanceType: t2.micro
-      NetworkInterfaces:
-        - AssociatePublicIpAddress: "false"
-          DeviceIndex: "0"
-          GroupSet:
-            - "Fn::ImportValue": !Sub ${EnvironmentName}-${ProjectName}-private-sg
-          SubnetId: !ImportValue
-            "Fn::Sub": ${EnvironmentName}-${ProjectName}-private-subnet-a
-      Tags:
-        - Key: Name
-          Value: !Sub ${EnvironmentName}-${ProjectName}-ec2
-        - Key: created_by
-          Value: cloudformation
-      UserData: !Base64 |
-        #!/bin/bash
-        sudo yum install -y git
-
-  EndpointSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: EndpointSecurityGroup
-      VpcId: !ImportValue
-        "Fn::Sub": ${EnvironmentName}-${ProjectName}-vpc
-      Tags:
-        - Key: Name
-          Value: !Sub ${EnvironmentName}-${ProjectName}-endpoint-sg
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 443
-          ToPort: 443
-          CidrIp: !ImportValue
-            "Fn::Sub": ${EnvironmentName}-${ProjectName}-vpc-cidr
-
-  EndpointSSM:
-    Type: AWS::EC2::VPCEndpoint
-    Properties:
-      PrivateDnsEnabled: true
-      SecurityGroupIds:
-        - !Ref EndpointSecurityGroup
-      ServiceName: !Sub com.amazonaws.${AWS::Region}.ssm
-      SubnetIds:
-        - !ImportValue
-          "Fn::Sub": ${EnvironmentName}-${ProjectName}-private-subnet-a
-      VpcEndpointType: Interface
-      VpcId: !ImportValue
-        "Fn::Sub": ${EnvironmentName}-${ProjectName}-vpc
-
-  EndpointSSMMessages:
-    Type: AWS::EC2::VPCEndpoint
-    Properties:
-      PrivateDnsEnabled: true
-      SecurityGroupIds:
-        - !Ref EndpointSecurityGroup
-      ServiceName: !Sub com.amazonaws.${AWS::Region}.ssmmessages
-      SubnetIds:
-        - !ImportValue
-          "Fn::Sub": ${EnvironmentName}-${ProjectName}-private-subnet-a
-      VpcEndpointType: Interface
-      VpcId: !ImportValue
-        "Fn::Sub": ${EnvironmentName}-${ProjectName}-vpc
-
-  EndpointEC2Messages:
-    Type: AWS::EC2::VPCEndpoint
-    Properties:
-      PrivateDnsEnabled: true
-      SecurityGroupIds:
-        - !Ref EndpointSecurityGroup
-      ServiceName: !Sub com.amazonaws.${AWS::Region}.ec2messages
-      SubnetIds:
-        - !ImportValue
-          "Fn::Sub": ${EnvironmentName}-${ProjectName}-private-subnet-a
-      VpcEndpointType: Interface
-      VpcId: !ImportValue
-        "Fn::Sub": ${EnvironmentName}-${ProjectName}-vpc
-
-  EndpointS3:
-    Type: AWS::EC2::VPCEndpoint
-    Properties:
-      RouteTableIds:
-        - !ImportValue 
-          "Fn::Sub": ${EnvironmentName}-${ProjectName}-private-route-table
-      ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
-      VpcEndpointType: Gateway
-      VpcId: !ImportValue
-        "Fn::Sub": ${EnvironmentName}-${ProjectName}-vpc
+        - Ref: SessionManagerIAMRole

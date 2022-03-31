@@ -71,8 +71,8 @@ Resources:
         - Ref: EnvironmentName
         - VPC
         - CidrBlock
-      EnableDnsSupport: true
       EnableDnsHostnames: true
+      EnableDnsSupport: true
       Tags:
         - Key: env
           Value: !Ref EnvironmentName
@@ -80,6 +80,28 @@ Resources:
           Value: !Sub ${EnvironmentName}-${ProjectName}
         - Key: created_by
           Value: cloudformation
+
+  EndpointSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: EndpointSecurityGroup
+      SecurityGroupIngress:
+        - CidrIp: !GetAtt VPC.CidrBlock
+          FromPort: 443
+          IpProtocol: tcp
+          ToPort: 443
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-${ProjectName}-endpoint-sg
+      VpcId: !Ref VPC
+
+  PrivateRouteTable:
+    Type: "AWS::EC2::RouteTable"
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-${ProjectName}-private-route-table
+      VpcId: !Ref VPC
 
   PrivateSubnetA:
     Type: "AWS::EC2::Subnet"
@@ -161,25 +183,55 @@ Resources:
           Value: cloudformation
       VpcId: !Ref VPC
 
-  PrivateRouteTable:
-    Type: AWS::EC2::RouteTable
+  EndpointS3:
+    Type: "AWS::EC2::VPCEndpoint"
     Properties:
+      RouteTableIds:
+        - Ref: PrivateRouteTable
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.s3"
+      VpcEndpointType: Gateway
       VpcId: !Ref VPC
-      Tags:
-        - Key: Name
-          Value: !Sub ${EnvironmentName}-${ProjectName}-private-route-table
+
+  EndpointEC2Messages:
+    Type: "AWS::EC2::VPCEndpoint"
+    Properties:
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - Ref: EndpointSecurityGroup
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.ec2messages"
+      SubnetIds:
+        - Ref: PrivateSubnetA
+        - Ref: PrivateSubnetC
+      VpcEndpointType: Interface
+      VpcId: !Ref VPC
+
+  EndpointSSM:
+    Type: "AWS::EC2::VPCEndpoint"
+    Properties:
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - Ref: EndpointSecurityGroup
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.ssm"
+      SubnetIds:
+        - Ref: PrivateSubnetA
+        - Ref: PrivateSubnetC
+      VpcEndpointType: Interface
+      VpcId: !Ref VPC
+
+  EndpointSSMMessages:
+    Type: "AWS::EC2::VPCEndpoint"
+    Properties:
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - Ref: EndpointSecurityGroup
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.ssmmessages"
+      SubnetIds:
+        - Ref: PrivateSubnetA
+        - Ref: PrivateSubnetC
+      VpcEndpointType: Interface
+      VpcId: !Ref VPC
 
 Outputs:
-  VPC:
-    Value: !Ref VPC
-    Export:
-      Name: !Sub ${EnvironmentName}-${ProjectName}-vpc
-
-  VPCCIDR:
-    Value: !GetAtt VPC.CidrBlock
-    Export:
-      Name: !Sub ${EnvironmentName}-${ProjectName}-vpc-cidr
-
   PrivateSubnetA:
     Value: !Ref PrivateSubnetA
     Export:
@@ -200,7 +252,7 @@ Outputs:
     Export:
       Name: !Sub ${EnvironmentName}-${ProjectName}-public-subnet-c
 
-  PrivateRouteTable:
-    Value: !Ref PrivateRouteTable
+  VPC:
+    Value: !Ref VPC
     Export:
-      Name: !Sub ${EnvironmentName}-${ProjectName}-private-route-table
+      Name: !Sub ${EnvironmentName}-${ProjectName}-vpc
