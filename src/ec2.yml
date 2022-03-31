@@ -29,7 +29,6 @@ Resources:
               - "sts:AssumeRole"
       ManagedPolicyArns:
         - "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-        - "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM"
       Path: /
       RoleName: !Sub ${EnvironmentName}-${ProjectName}-ssm
 
@@ -39,7 +38,7 @@ Resources:
       InstanceProfileName: !Sub ${EnvironmentName}-${ProjectName}-profile
       Path: /
       Roles:
-        - Ref: SessionManagerIAMRole
+        - !Ref SessionManagerIAMRole
 
   SessionManagerIAMPolicy:
     Type: "AWS::IAM::Policy"
