@@ -81,7 +81,7 @@ Resources:
     Type: "AWS::EC2::Instance"
     Properties:
       IamInstanceProfile: !Ref InstanceProfile
-      ImageId: ami-082c70eb5ed5441a1
+      ImageId: ami-0521a4a0a1329ff86
       InstanceType: t2.micro
       NetworkInterfaces:
         - AssociatePublicIpAddress: "false"
