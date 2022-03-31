@@ -169,16 +169,73 @@ Resources:
         - Key: Name
           Value: !Sub ${EnvironmentName}-${ProjectName}-private-route-table
 
+  EndpointSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: EndpointSecurityGroup
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: !GetAtt VPC.CidrBlock
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-${ProjectName}-endpoint-sg
+
+  EndpointSSM:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      PrivateDnsEnabled: true
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ssm
+      VpcEndpointType: Interface
+      VpcId: !Ref VPC
+      SubnetIds:
+        - !Ref PrivateSubnetA
+        - !Ref PrivateSubnetC
+      SecurityGroupIds:
+        - !Ref EndpointSecurityGroup
+
+  EndpointSSMMessages:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      PrivateDnsEnabled: true
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ssmmessages
+      VpcEndpointType: Interface
+      VpcId: !Ref VPC
+      SubnetIds:
+        - !Ref PrivateSubnetA
+        - !Ref PrivateSubnetC
+      SecurityGroupIds:
+        - !Ref EndpointSecurityGroup
+
+  EndpointEC2Messages:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      PrivateDnsEnabled: true
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ec2messages
+      VpcEndpointType: Interface
+      VpcId: !Ref VPC
+      SubnetIds:
+        - !Ref PrivateSubnetA
+        - !Ref PrivateSubnetC
+      SecurityGroupIds:
+        - !Ref EndpointSecurityGroup
+
+  EndpointS3:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
+      VpcEndpointType: Gateway
+      VpcId: !Ref VPC
+      RouteTableIds:
+        - !Ref PrivateRouteTable
+
 Outputs:
   VPC:
     Value: !Ref VPC
     Export:
       Name: !Sub ${EnvironmentName}-${ProjectName}-vpc
-
-  VPCCIDR:
-    Value: !GetAtt VPC.CidrBlock
-    Export:
-      Name: !Sub ${EnvironmentName}-${ProjectName}-vpc-cidr
 
   PrivateSubnetA:
     Value: !Ref PrivateSubnetA
@@ -199,8 +256,3 @@ Outputs:
     Value: !Ref PublicSubnetC
     Export:
       Name: !Sub ${EnvironmentName}-${ProjectName}-public-subnet-c
-
-  PrivateRouteTable:
-    Value: !Ref PrivateRouteTable
-    Export:
-      Name: !Sub ${EnvironmentName}-${ProjectName}-private-route-table
