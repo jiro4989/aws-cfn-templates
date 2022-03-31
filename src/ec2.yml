@@ -47,7 +47,8 @@ Resources:
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
-          - Action:
+          - Effect: Allow
+            Action:
               - "s3:PutObject"
             Resource: "*"
       PolicyName: !Sub ${EnvironmentName}-${ProjectName}-ssm
