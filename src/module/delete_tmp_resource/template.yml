@@ -23,16 +23,42 @@ Parameters:
     Description: The project name
 
 Resources:
-  EC2LogGroup:
-    Type: "AWS::Logs::LogGroup"
-    Properties:
-      LogGroupName: !Sub ${EnvironmentName}-${ProjectName}-ssm
-      RetentionInDays: 1
+  LambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties: 
+      FunctionName: delete-tmp-resource
+      Handler: index.handler
+      Role: !Ref LambdaIAMRole
+      Runtime: python3.9
+      Timeout: 10
+      Code:
+        S3Bucket: lambda.jiro4989.com
+        S3Key: ops/delete-tmp-resource.zip
       Tags:
-        - Key: created_by
+        - Key: Environment
+          Value: ops
+        - Key: CreatedBy
           Value: cloudformation
 
-  SessionManagerIAMRole:
+  ScheduleEvent:
+    Type: AWS::Events::Rule
+    Properties:
+        Description: ’schedule event for lambda’
+        ScheduleExpression: 'cron(0 10 * * ? *)'
+        State: ENABLED
+        Targets:
+          - Arn: !GetAtt LambdaFunction.Arn
+            Id: delete-tmp-resource
+
+  LambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties: 
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref LambdaFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt ScheduleEvent.Arn
+
+  LambdaIAMRole:
     Type: "AWS::IAM::Role"
     Properties:
       AssumeRolePolicyDocument:
@@ -49,41 +75,7 @@ Resources:
       Path: /
       RoleName: !Sub ${EnvironmentName}-${ProjectName}-ssm
 
-  InstanceProfile:
-    Type: "AWS::IAM::InstanceProfile"
-    Properties:
-      InstanceProfileName: !Sub ${EnvironmentName}-${ProjectName}-profile
-      Path: /
-      Roles:
-        - Ref: SessionManagerIAMRole
-
-  EC2:
-    Type: "AWS::EC2::Instance"
-    Properties:
-      IamInstanceProfile: !Ref InstanceProfile
-      ImageId: ami-0521a4a0a1329ff86
-      InstanceType: t2.micro
-      NetworkInterfaces:
-        - AssociatePublicIpAddress: "false"
-          DeviceIndex: "0"
-          GroupSet:
-            - "Fn::ImportValue": !Sub ${EnvironmentName}-${ProjectName}-private-sg
-          SubnetId: !ImportValue
-            "Fn::Sub": ${EnvironmentName}-${ProjectName}-private-subnet-${AvailabilityZone}
-      Tags:
-        - Key: Name
-          Value: !Sub ${EnvironmentName}-${ProjectName}
-        - Key: created_by
-          Value: cloudformation
-        - Key: resource_type
-          Value: tmp
-        - Key: auto_deletion
-          Value: 'true'
-      UserData: !Base64 |-
-        #!/bin/bash
-        sudo yum install -y git
-
-  SessionManagerIAMPolicy:
+  LambdaIAMPolicy:
     Type: "AWS::IAM::Policy"
     Properties:
       PolicyDocument:

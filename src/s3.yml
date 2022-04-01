@@ -11,6 +11,11 @@ Resources:
     Properties:
       BucketName: log.jiro4989.com
 
+  LambdaS3Bucket:
+    Type: "AWS::S3::Bucket"
+    Properties:
+      BucketName: lambda.jiro4989.com
+
 Outputs:
   LogS3Bucket:
     Value: !GetAtt LogS3Bucket.Arn
