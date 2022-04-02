@@ -1,0 +1,124 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Parameters:
+  Env:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - prd
+      - stg
+      - dev
+    Description: The environment name
+
+  Name:
+    Type: String
+    Description: The name
+
+  SizeInMBs:
+    Type: Number
+    Description: The size of the buffer in MBs
+    Default: 5
+    MinValue: 1
+    MaxValue: 128
+
+  IntervalInSeconds:
+    Type: String
+    Description: The name
+    Default: 300
+    MinValue: 60
+    MaxValue: 900
+
+  CompressionFormat:
+    Description: "The type of compression that Kinesis Data Firehose uses to compress the data that it delivers to the Amazon S3 bucket. "
+    Type: String
+    Default: 'UNCOMPRESSED'
+
+Resources:
+  LogGroup:
+    Type: "AWS::Logs::LogGroup"
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${Env}-${Name}
+      RetentionInDays: 1
+      Tags:
+        - Key: created_by
+          Value: cloudformation
+
+  SubscriptionFilterLogToKinesis:
+    Type: AWS::Logs::SubscriptionFilter
+    Properties: 
+      DestinationArn: !GetAtt KinesisFirehoseToS3
+      FilterPattern: ''
+      LogGroupName: !Ref LogGroup
+      RoleArn: !GetAtt IAMRoleForSubscriptionFilter.Arn
+
+  KinesisFirehoseToS3:
+    Type: AWS::KinesisFirehose::DeliveryStream
+    Properties:
+      DeliveryStreamName: !Sub '${Env}-${Name}-stream' 
+      DeliveryStreamType: 'DirectPut'
+      S3DestinationConfiguration:
+        BucketARN: !ImportValue log-bucket-arn
+        BufferingHints:
+          SizeInMBs: !Ref SizeInMBs
+          IntervalInSeconds: !Ref IntervalInSeconds
+        CompressionFormat: !Ref CompressionFormat
+        Prefix: !Sub ${Env}/${Name}/ok/year=!{timestamp:YYYY}/month=!{timestamp:MM}/day=!{timestamp:dd}/hour=!{timestamp:HH}/
+        ErrorOutputPrefix: !Sub ${Env}/${Name}/err/year=!{timestamp:YYYY}/month=!{timestamp:MM}/day=!{timestamp:dd}/hour=!{timestamp:HH}/
+      RoleArn: !GetAtt IAMRoleForDeliveryStream.Arn
+
+  IAMRoleForSubscriptionFilter:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - !Sub logs.${AWS::Region}.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      Path: /
+      RoleName: !Sub ${Env}-${Name}-subscription-filter
+      Policies:
+        - PolicyName: ${Env}-${Name}-subscription-filter
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - firehose:PutRecord
+                  - firehose:PutRecords
+                Resource: !Sub 'arn:aws:firehose:${AWS::Region}:${AWS::AccountId}:deliverystream/*'
+
+  IAMRoleForDeliveryStream:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - firehose.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      RoleName: !Sub ${Env}-${Name}-delivery-stream
+      Policies:
+        - PolicyName: ${Env}-${Name}-delivery-stream
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:AbortMultipartUpload
+                  - s3:GetBucketLocation
+                  - s3:GetObject
+                  - s3:ListBucket
+                  - s3:ListBucketMultipartUploads
+                  - s3:PutObject
+                Resource:
+                  - !ImportValue log-bucket-arn
+                  - !Sub
+                    - ${Arn}/*
+                    - Arn: !ImportValue log-bucket-arn

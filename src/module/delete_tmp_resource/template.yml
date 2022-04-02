@@ -1,54 +1,38 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
 Parameters:
-  AvailabilityZone:
+  Env:
     Type: String
-    Default: a
+    Default: ops
     AllowedValues:
-      - a
-      - c
-    Description: Availability Zone
-
-  EnvironmentName:
-    Type: String
-    Default: dev
-    AllowedValues:
-      - prd
-      - stg
-      - dev
+      - ops
     Description: The environment name
 
-  ProjectName:
+  Name:
     Type: String
-    Description: The project name
+    Description: The name
 
 Resources:
   LambdaFunction:
     Type: AWS::Lambda::Function
     Properties: 
-      FunctionName: delete-tmp-resource
-      Handler: index.handler
+      FunctionName: !Sub ${Env}-${Name}
+      Handler: lambda_function.lambda_handler
       Role: !Ref LambdaIAMRole
       Runtime: python3.9
-      Timeout: 10
+      Timeout: 300
       Code:
         S3Bucket: lambda.jiro4989.com
-        S3Key: ops/delete-tmp-resource.zip
+        S3Key: !Sub ${Env}/${Name}.zip
+      Environment:
+        Variables:
+          RETAINING_DAYS: '7'
+          RUN: 'false'
       Tags:
-        - Key: Environment
-          Value: ops
-        - Key: CreatedBy
+        - Key: env
+          Value: !Sub ${Env}
+        - Key: created_by
           Value: cloudformation
-
-  ScheduleEvent:
-    Type: AWS::Events::Rule
-    Properties:
-        Description: ’schedule event for lambda’
-        ScheduleExpression: 'cron(0 10 * * ? *)'
-        State: ENABLED
-        Targets:
-          - Arn: !GetAtt LambdaFunction.Arn
-            Id: delete-tmp-resource
 
   LambdaInvokePermission:
     Type: AWS::Lambda::Permission
@@ -56,9 +40,19 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !Ref LambdaFunction
       Principal: events.amazonaws.com
-      SourceArn: !GetAtt ScheduleEvent.Arn
+      SourceArn: !GetAtt EventsRule.Arn
 
-  LambdaIAMRole:
+  EventsRule:
+    Type: AWS::Events::Rule
+    Properties:
+        Description: ’schedule event for lambda’
+        ScheduleExpression: 'cron(0 10 * * ? *)'
+        State: ENABLED
+        Targets:
+          - Arn: !GetAtt LambdaFunction.Arn
+            Id: !Sub ${Env}-${Name}
+
+  IAMRoleForLambda:
     Type: "AWS::IAM::Role"
     Properties:
       AssumeRolePolicyDocument:
@@ -67,37 +61,22 @@ Resources:
           - Effect: Allow
             Principal:
               Service:
-                - ec2.amazonaws.com
+                - lambda.amazonaws.com
             Action:
               - "sts:AssumeRole"
       ManagedPolicyArns:
-        - "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+        - "arn:aws:iam::aws:policy/AWSLambdaBasicExecutionRole"
       Path: /
-      RoleName: !Sub ${EnvironmentName}-${ProjectName}-ssm
-
-  LambdaIAMPolicy:
-    Type: "AWS::IAM::Policy"
-    Properties:
-      PolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Action:
-              - "s3:PutObject"
-            Resource: !Sub
-              - ${Arn}/*
-              - Arn: !ImportValue log-bucket-arn
-          - Effect: Allow
-            Action:
-              - "logs:PutLogEvents"
-              - "logs:CreateLogStream"
-            Resource:
-              - "Fn::Sub":
-                  - ${Arn}
-                  - Arn: !GetAtt EC2LogGroup.Arn
-              - "Fn::Sub":
-                  - ${Arn}/*
-                  - Arn: !GetAtt EC2LogGroup.Arn
-      PolicyName: !Sub ${EnvironmentName}-${ProjectName}-ssm
-      Roles:
-        - Ref: SessionManagerIAMRole
+      RoleName: !Sub ${Env}-${Name}-lambda
+      Policies:
+        - PolicyName: ${Env}-${Name}-lambda
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ec2:DescribeInstances
+                  - ec2:DescribeTags
+                  - "cloudformation:DeleteStack"
+                  - "cloudformation:DescribeStacks"
+                Resource: '*'
