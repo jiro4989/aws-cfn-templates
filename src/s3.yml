@@ -10,6 +10,11 @@ Resources:
     Type: "AWS::S3::Bucket"
     Properties:
       BucketName: log.jiro4989.com
+      LifecycleConfiguration:
+        Rules:
+          - Id: expiration-7-days
+            Status: Enabled
+            ExpirationInDays: 7
 
   LambdaS3Bucket:
     Type: "AWS::S3::Bucket"
