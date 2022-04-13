@@ -70,7 +70,7 @@ Resources:
       Path: /
       RoleName: !Sub ${Env}-${Name}-lambda
       Policies:
-        - PolicyName: ${Env}-${Name}-lambda
+        - PolicyName: !Sub ${Env}-${Name}-lambda
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
