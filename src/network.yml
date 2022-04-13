@@ -14,6 +14,17 @@ Parameters:
     Type: String
     Description: The project name
 
+  VpcEndpoint:
+    Type: String
+    Default: 'false'
+    AllowedValues:
+      - 'true'
+      - 'false'
+
+Conditions:
+  EnableVpcEndpoint:
+    !Equals [true, !Ref VpcEndpoint]
+
 Mappings:
   dev:
     PrivateSubnetA:
@@ -184,6 +195,7 @@ Resources:
       VpcId: !Ref VPC
 
   EndpointS3:
+    Condition: EnableVpcEndpoint
     Type: "AWS::EC2::VPCEndpoint"
     Properties:
       RouteTableIds:
@@ -193,6 +205,7 @@ Resources:
       VpcId: !Ref VPC
 
   EndpointEC2Messages:
+    Condition: EnableVpcEndpoint
     Type: "AWS::EC2::VPCEndpoint"
     Properties:
       PrivateDnsEnabled: true
@@ -206,6 +219,7 @@ Resources:
       VpcId: !Ref VPC
 
   EndpointSSM:
+    Condition: EnableVpcEndpoint
     Type: "AWS::EC2::VPCEndpoint"
     Properties:
       PrivateDnsEnabled: true
@@ -219,6 +233,7 @@ Resources:
       VpcId: !Ref VPC
 
   EndpointSSMMessages:
+    Condition: EnableVpcEndpoint
     Type: "AWS::EC2::VPCEndpoint"
     Properties:
       PrivateDnsEnabled: true
