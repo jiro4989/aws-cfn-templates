@@ -47,7 +47,7 @@ Resources:
   SubscriptionFilterLogToKinesis:
     Type: AWS::Logs::SubscriptionFilter
     Properties:
-      DestinationArn: !GetAtt KinesisFirehoseToS3
+      DestinationArn: !GetAtt KinesisFirehoseToS3.Arn
       FilterPattern: ''
       LogGroupName: !Ref LogGroup
       RoleArn: !GetAtt IAMRoleForSubscriptionFilter.Arn
