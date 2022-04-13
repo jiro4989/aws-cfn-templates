@@ -10,7 +10,7 @@ deploy: ## デプロイする。
 	aws cloudformation deploy --stack-name iam --template-file ./src/iam.yml --capabilities CAPABILITY_NAMED_IAM
 	aws cloudformation deploy --stack-name s3 --template-file ./src/s3.yml
 	aws s3 cp src/ec2.yml s3://cfn.jiro4989.com/
-	make -C src/module/delete_tmp_resource
+	make -C src/module/delete_tmp_resource ENV=ops NAME=delete_tmp_resource
 	make deploy-env ENV=dev
 
 .PHONY: deploy-env

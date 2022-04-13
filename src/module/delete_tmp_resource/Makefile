@@ -1,6 +1,3 @@
-ENV := ops
-NAME := delete_tmp_resource
-
 .PHONY: deploy
 deploy:
 	make -C ../logstream
