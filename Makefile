@@ -4,8 +4,12 @@ FORMAT_CMD := docker run --rm -v $(PWD):/app -w /app -it aws_cfn_templates_forma
 help: ## ドキュメントのヘルプを表示する。
 	@grep -E '^[0-9a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
+.PHONY: test
+test:
+	./script/test.sh
+
 .PHONY: deploy
-deploy: ## デプロイする。
+deploy: test ## デプロイする。
 	# IAM周りを変更する場合は --capabilities CAPABILITY_NAMED_IAM オプションが必須
 	aws cloudformation deploy --stack-name iam --template-file ./src/iam.yml --capabilities CAPABILITY_NAMED_IAM
 	aws cloudformation deploy --stack-name s3 --template-file ./src/s3.yml
