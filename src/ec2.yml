@@ -75,6 +75,10 @@ Resources:
           Value: !Sub ${EnvironmentName}-${ProjectName}
         - Key: created_by
           Value: cloudformation
+        - Key: resource_type
+          Value: tmp
+        - Key: auto_deletion
+          Value: 'true'
       UserData: !Base64 |-
         #!/bin/bash
         sudo yum install -y git
