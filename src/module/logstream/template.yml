@@ -64,7 +64,7 @@ Resources:
           IntervalInSeconds: !Ref IntervalInSeconds
         CompressionFormat: !Ref CompressionFormat
         Prefix: !Sub ${Env}/${Name}/ok/year=!{timestamp:YYYY}/month=!{timestamp:MM}/day=!{timestamp:dd}/hour=!{timestamp:HH}/
-        ErrorOutputPrefix: !Sub ${Env}/${Name}/err/year=!{timestamp:YYYY}/month=!{timestamp:MM}/day=!{timestamp:dd}/hour=!{timestamp:HH}/
+        ErrorOutputPrefix: !Sub ${Env}/${Name}/!{firehose:error-output-type}/year=!{timestamp:YYYY}/month=!{timestamp:MM}/day=!{timestamp:dd}/hour=!{timestamp:HH}/
         RoleArn: !GetAtt IAMRoleForDeliveryStream.Arn
 
   IAMRoleForSubscriptionFilter:
