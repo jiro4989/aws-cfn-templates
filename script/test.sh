@@ -2,6 +2,6 @@
 
 set -eux
 
-for file in $(find src/ -name '*.yml'); do
+for file in $(find template/ -name '*.yml'); do
   aws cloudformation validate-template --template-body "file://${file}"
 done

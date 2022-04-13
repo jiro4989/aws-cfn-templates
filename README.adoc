@@ -16,7 +16,7 @@ make deploy
 
 == ファイル構成
 
-src ディレクトリ配下のyamlファイルがCloudFormationで使うテンプレート。
+template ディレクトリ配下のyamlファイルがCloudFormationで使うテンプレート。
 
 [options="header"]
 |=================
