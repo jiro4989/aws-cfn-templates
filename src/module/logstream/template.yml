@@ -54,6 +54,12 @@ Resources:
 
   KinesisFirehoseToS3:
     Type: AWS::KinesisFirehose::DeliveryStream
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+            - E3002
+            - E3003
     Properties:
       DeliveryStreamName: !Sub '${Env}-${Name}-stream'
       DeliveryStreamType: 'DirectPut'
