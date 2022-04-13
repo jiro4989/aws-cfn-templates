@@ -82,7 +82,7 @@ Resources:
       Path: /
       RoleName: !Sub ${Env}-${Name}-subscription-filter
       Policies:
-        - PolicyName: ${Env}-${Name}-subscription-filter
+        - PolicyName: !Sub ${Env}-${Name}-subscription-filter
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
@@ -106,7 +106,7 @@ Resources:
               - "sts:AssumeRole"
       RoleName: !Sub ${Env}-${Name}-delivery-stream
       Policies:
-        - PolicyName: ${Env}-${Name}-delivery-stream
+        - PolicyName: !Sub ${Env}-${Name}-delivery-stream
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
