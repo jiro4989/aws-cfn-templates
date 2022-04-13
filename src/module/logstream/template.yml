@@ -22,7 +22,7 @@ Parameters:
     MaxValue: 128
 
   IntervalInSeconds:
-    Type: String
+    Type: Number
     Description: The name
     Default: 300
     MinValue: 60
