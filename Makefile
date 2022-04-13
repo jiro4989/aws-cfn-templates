@@ -31,4 +31,3 @@ deploy-ec2-env: ## EC2を作る
 .PHONY: setup
 setup:
 	pip3 install -r requirements.txt
-
