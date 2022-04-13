@@ -7,6 +7,7 @@ Parameters:
     AllowedValues:
       - prd
       - stg
+      - ops
       - dev
     Description: The environment name
 
@@ -45,7 +46,7 @@ Resources:
 
   SubscriptionFilterLogToKinesis:
     Type: AWS::Logs::SubscriptionFilter
-    Properties: 
+    Properties:
       DestinationArn: !GetAtt KinesisFirehoseToS3
       FilterPattern: ''
       LogGroupName: !Ref LogGroup
@@ -54,7 +55,7 @@ Resources:
   KinesisFirehoseToS3:
     Type: AWS::KinesisFirehose::DeliveryStream
     Properties:
-      DeliveryStreamName: !Sub '${Env}-${Name}-stream' 
+      DeliveryStreamName: !Sub '${Env}-${Name}-stream'
       DeliveryStreamType: 'DirectPut'
       S3DestinationConfiguration:
         BucketARN: !ImportValue log-bucket-arn
