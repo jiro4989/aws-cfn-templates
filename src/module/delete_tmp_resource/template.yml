@@ -19,7 +19,7 @@ Resources:
     Properties:
       FunctionName: !Sub ${Env}-${Name}
       Handler: lambda_function.lambda_handler
-      Role: !Ref IAMRoleForLambda
+      Role: !GetAtt IAMRoleForLambda.Arn
       Runtime: python3.9
       Timeout: 300
       Code:
