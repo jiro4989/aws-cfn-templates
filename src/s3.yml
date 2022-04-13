@@ -14,7 +14,7 @@ Resources:
         Rules:
           - Id: expiration-7-days
             Status: Enabled
-            ExpirationInDays: 7
+            ExpirationInDays: 3
 
   LambdaS3Bucket:
     Type: "AWS::S3::Bucket"
