@@ -2,6 +2,4 @@
 
 set -eux
 
-for file in $(find src/ -name '*.yml'); do
-  cfn-lint "$file"
-done
+find src/ -name '*.yml' -exec cfn-lint -r ap-northeast-1 -t '{}' \;
