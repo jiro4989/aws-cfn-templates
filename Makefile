@@ -1,5 +1,3 @@
-FORMAT_CMD := docker run --rm -v $(PWD):/app -w /app -it aws_cfn_templates_formatter
-
 .PHONY: help
 help: ## ドキュメントのヘルプを表示する。
 	@grep -E '^[0-9a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
@@ -7,6 +5,10 @@ help: ## ドキュメントのヘルプを表示する。
 .PHONY: test
 test:
 	./script/test.sh
+
+.PHONY: lint
+lint:
+	./script/lint.sh
 
 .PHONY: deploy
 deploy: test ## デプロイする。
@@ -26,25 +28,7 @@ deploy-env: ## 環境指定でデプロイする。ENV変数が必須パラメ�
 deploy-ec2-env: ## EC2を作る
 	aws cloudformation deploy --stack-name $(ENV)-ec2 --template-file ./src/ec2.yml --parameter-overrides EnvironmentName=$(ENV) ProjectName=work --capabilities CAPABILITY_NAMED_IAM
 
-.PHONY: format
-format: ## フォーマット済みか検証する
-	for f in src/*.yml; do \
-		$(FORMAT_CMD) -v $$f; \
-	done
+.PHONY: setup
+setup:
+	pip3 install -r requirements.txt
 
-.PHONY: format-save
-format-save: ## フォーマットして上書きする
-	for f in src/*.yml; do \
-		$(FORMAT_CMD) -w $$f; \
-	done
-
-.PHONY: setup-tool
-setup-tool: setup-tool-formatter setup-tool-linter ## ツールイメージを生成する
-
-.PHONY: setup-tool-formatter
-setup-tool-formatter: ## フォーマッタをインストールする
-	cd tool/formatter && docker build -t aws_cfn_templates_formatter .
-
-.PHONY: setup-tool-linter
-setup-tool-linter: ## Linterをインストールする
-	cd tool/linter && docker build -t aws_cfn_templates_linter .
