@@ -8,7 +8,7 @@ test:
 
 .PHONY: lint
 lint:
-	./script/lint.sh
+	cfn-lint
 
 .PHONY: deploy
 deploy: test ## デプロイする。
