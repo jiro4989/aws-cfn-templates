@@ -15,7 +15,7 @@ Parameters:
 Resources:
   LambdaFunction:
     Type: AWS::Lambda::Function
-    Properties: 
+    Properties:
       FunctionName: !Sub ${Env}-${Name}
       Handler: lambda_function.lambda_handler
       Role: !Ref LambdaIAMRole
@@ -36,7 +36,7 @@ Resources:
 
   LambdaInvokePermission:
     Type: AWS::Lambda::Permission
-    Properties: 
+    Properties:
       Action: lambda:InvokeFunction
       FunctionName: !Ref LambdaFunction
       Principal: events.amazonaws.com
@@ -45,12 +45,12 @@ Resources:
   EventsRule:
     Type: AWS::Events::Rule
     Properties:
-        Description: ’schedule event for lambda’
-        ScheduleExpression: 'cron(0 10 * * ? *)'
-        State: ENABLED
-        Targets:
-          - Arn: !GetAtt LambdaFunction.Arn
-            Id: !Sub ${Env}-${Name}
+      Description: ’schedule event for lambda’
+      ScheduleExpression: 'cron(0 10 * * ? *)'
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt LambdaFunction.Arn
+          Id: !Sub ${Env}-${Name}
 
   IAMRoleForLambda:
     Type: "AWS::IAM::Role"
